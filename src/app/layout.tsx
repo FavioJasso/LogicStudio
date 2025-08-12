@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Logic Studio — Validity & Syllogisms",
-  description: "Check arguments for validity, build truth tables, and explore categorical syllogisms.",
+  description: "Check arguments for validity, build truth tables, and explore categorical syllogisms. For Academics, Students, and Professionals.",
 };
 
 export default function RootLayout({
