@@ -9,6 +9,11 @@ export default function Home() {
   const [projectorMode, setProjectorMode] = React.useState(false);
   const [largeText, setLargeText] = React.useState(false);
   const [highContrast, setHighContrast] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("large-text-root", largeText);
+    }
+  }, [largeText]);
   return (
     <div className={`min-h-screen font-sans bg-gradient-to-b from-white to-zinc-50 dark:from-zinc-950 dark:to-zinc-900 ${projectorMode ? "projector-mode" : ""} ${highContrast ? "high-contrast" : ""}`}>
       <div className="max-w-4xl mx-auto px-6 py-10">
