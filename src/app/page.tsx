@@ -45,7 +45,7 @@ export default function Home() {
           </div>
         </div>
         <footer className="text-xs text-zinc-500 dark:text-zinc-400 mt-8">
-          Made for philosophy enthusiasts. Symbols supported: ¬ ~ ! ∧ & ^ ∨ | → -&gt; ↔ &lt;-&gt;
+          Made for philosophy academia. Symbols supported: ¬ ~ ! ∧ & ^ ∨ | → -&gt; ↔ &lt;-&gt;
         </footer>
       </div>
     </div>
