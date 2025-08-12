@@ -264,7 +264,7 @@ ${bodyRows}\\hline
     },
   ];
 
-  const [selectedExampleIdx, setSelectedExampleIdx] = React.useState<number | null>(0);
+  const [selectedExampleIdx, setSelectedExampleIdx] = React.useState<number>(0);
 
   return (
     <div className="space-y-6">
@@ -273,6 +273,7 @@ ${bodyRows}\\hline
           <label className="text-sm text-zinc-600 dark:text-zinc-400">Load example:</label>
           <select
             className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            value={selectedExampleIdx}
             onChange={(e) => {
               const idx = Number(e.target.value);
               const ex = examples[idx];
@@ -283,7 +284,7 @@ ${bodyRows}\\hline
             }}
           >
             {examples.map((ex, i) => (
-              <option key={i} value={i} selected={i === selectedExampleIdx ?? 0}>
+              <option key={i} value={i}>
                 {ex.label}
               </option>
             ))}
