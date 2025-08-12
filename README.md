@@ -1,8 +1,20 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Logic Studio
+
+Logic Studio is a web-based toolkit for learning and teaching formal logic. It is built with [Next.js](https://nextjs.org) and designed for classrooms, tutoring labs, and self-study.
+
+### Mission
+Empower instructors and students to focus on reasoning, not rote mechanics. Logic Studio streamlines tasks that are time-consuming on the board—like constructing truth tables or checking syllogisms—so classes can spend more time on interpretation and proof strategy. This includes supporting instructors who often construct logic tables by hand on a whiteboard and can get tired; Logic Studio reduces fatigue, speeds up feedback, and preserves the clarity of step-by-step work for teaching.
+
+### Current Features
+- Propositional logic helpers: input well-formed formulas and visualize evaluations
+- Syllogism checker: validate categorical syllogisms and common forms
+- Simple, clean UI components with keyboard support
+
+---
 
 ## Getting Started
 
-First, run the development server:
+Run the development server:
 
 ```bash
 npm run dev
@@ -14,23 +26,70 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Start editing the app by modifying `src/app/page.tsx`. The page auto-updates as you edit.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
+
+## Using Logic Studio (Overview)
+- Propositional Checker (`src/components/PropositionalChecker.tsx`): enter formulas to evaluate and compare.
+- Syllogism Checker (`src/components/SyllogismChecker.tsx`): test syllogistic forms and get quick validity feedback.
+
+---
+
+## Roadmap for Academic Use
+
+### For Professors
+- Auto-generated truth tables and step-by-step derivations for classroom display
+- Print- and projector-friendly themes; large-font/contrast modes
+- Assignment mode with rubrics, partial credit, and auto-grading for mechanical steps
+- Export to PDF/LaTeX/CSV for handouts, archives, and LMS uploads
+- Item banks with randomization and multiple versions to reduce sharing/cheating
+- Class analytics: common errors, time-on-task, and learning outcomes alignment
+
+### For Students
+- Guided “show me the next legal step” proofs with hints and misconceptions coaching
+- Practice sets with spaced repetition; mastery goals and progress tracking
+- Side-by-side comparisons of equivalent forms; syntax highlighting for scopes
+- Shareable links to solutions and collaborative study rooms
+
+### Pedagogy and Assessment
+- Configurable logic systems (connectives, truth values, quantifiers, symbol sets)
+- Support for natural deduction, semantic tableaux, and Venn/Carroll diagrams
+- Validity/consistency/counterexample generators with minimal countermodels
+- Explanation-first feedback: summarize why a derivation works or fails
+
+### Accessibility and Inclusivity
+- Full keyboard navigation, screen-reader semantics, and ARIA labels
+- High-contrast mode, dyslexia-friendly fonts, and color-independent cues
+- Localized UI copy; right-to-left language support
+- Offline-first PWA so classrooms without stable internet can still run activities
+
+### Integrations and Deployment
+- LMS integrations (LTI 1.3, Canvas, Moodle, Blackboard) for rostering and grade return
+- SSO (Google, Microsoft) and privacy-first analytics (no third-party trackers)
+- Cloud and on-prem deployment options; configurable data retention
+
+### Quality and Reliability
+- Comprehensive test suite for logic engines (unit and property-based tests)
+- Deterministic evaluation and clear error messages for malformed formulas
+- Versioned problem sets and reproducible random seeds for fairness
+
+If you are an educator: please open an issue describing your context (course level, topics, constraints). Real classroom feedback will drive priorities.
+
+---
+
+## Contributing
+Contributions are welcome—especially improvements to the logic engines, accessibility, and pedagogy. Please:
+1. Fork the repo and create a feature branch
+2. Add tests where relevant
+3. Open a pull request describing the educational impact of your change
+
+---
 
 ## Learn More
+- [Next.js Documentation](https://nextjs.org/docs) — framework features and API
+- [Learn Next.js](https://nextjs.org/learn) — interactive tutorial
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployment is straightforward with platforms like [Vercel](https://vercel.com). See the [Next.js deployment guide](https://nextjs.org/docs/app/building-your-application/deploying) for details.
