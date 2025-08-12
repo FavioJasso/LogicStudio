@@ -140,38 +140,44 @@ ${bodyRows}\\hline
     setPremises((prev) => prev.filter((_, idx) => idx !== i));
   }
 
+  const examples: Array<{ label: string; premises: string[]; conclusion: string }> = [
+    { label: "Modus Ponens", premises: ["P → Q", "P"], conclusion: "Q" },
+    { label: "Affirming the consequent (invalid)", premises: ["P → Q", "Q"], conclusion: "P" },
+    { label: "Tautological consequence", premises: ["P", "Q → P"], conclusion: "P" },
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-zinc-600 dark:text-zinc-400">Examples</div>
-        <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setPremises(["P → Q", "P"]);
-              setConclusion("Q");
+        <div className="flex items-center gap-2 no-print">
+          <label className="text-sm text-zinc-600 dark:text-zinc-400">Load example:</label>
+          <select
+            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            onChange={(e) => {
+              const ex = examples[Number(e.target.value)];
+              if (!ex) return;
+              setPremises(ex.premises);
+              setConclusion(ex.conclusion);
             }}
           >
-            Modus Ponens
+            <option value="" hidden>
+              Choose example
+            </option>
+            {examples.map((ex, i) => (
+              <option key={i} value={i}>
+                {ex.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex gap-2 flex-wrap items-center no-print">
+          <Button onClick={onRun}>Check validity</Button>
+          <Button variant="secondary" onClick={() => setShowDetailed((s) => !s)}>
+            {showDetailed ? "Hide" : "Show"} detailed table
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setPremises(["P → Q", "Q"]);
-              setConclusion("P");
-            }}
-          >
-            Affirming the consequent (invalid)
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setPremises(["P", "Q → P"]);
-              setConclusion("P");
-            }}
-          >
-            Tautological consequence
-          </Button>
+          <div className="relative">
+            <ExportMenu onCSV={exportCSV} onLaTeX={exportLaTeX} onPDF={exportPDF} />
+          </div>
         </div>
       </div>
 
@@ -430,6 +436,31 @@ function DetailedDerivation({
           </ol>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ExportMenu({ onCSV, onLaTeX, onPDF }: { onCSV: () => void; onLaTeX: () => void; onPDF: () => void }) {
+  const [open, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest?.("[data-export-menu]")) setOpen(false);
+    }
+    document.addEventListener("click", onDocClick);
+    return () => document.removeEventListener("click", onDocClick);
+  }, []);
+  return (
+    <div className="inline-block" data-export-menu>
+      <Button variant="outline" onClick={() => setOpen((v) => !v)}>Export</Button>
+      {open && (
+        <div className="absolute mt-2 w-40 rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+          <button className="w-full text-left px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={onCSV}>CSV</button>
+          <button className="w-full text-left px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={onLaTeX}>LaTeX</button>
+          <button className="w-full text-left px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={onPDF}>PDF</button>
+        </div>
+      )}
     </div>
   );
 }

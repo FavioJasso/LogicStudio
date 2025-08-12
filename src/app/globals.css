@@ -44,10 +44,7 @@ html.large-text-root {
 .large-text {
   font-size: 20px;
 }
-.high-contrast {
-  --background: #ffffff;
-  --foreground: #000000;
-}
+/* removed high-contrast toggle; base theme already provides good contrast */
 
 /* Print styles: focus on content area, hide controls */
 @media print {
