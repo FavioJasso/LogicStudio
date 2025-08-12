@@ -3,7 +3,7 @@ import React from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import type { CategoricalStatement, Quantifier, Syllogism } from "@/lib/logic/syllogism";
-import { analyzeMoodFigure, checkSyllogism } from "@/lib/logic/syllogism";
+import { checkSyllogism } from "@/lib/logic/syllogism";
 
 function StatementRow({
   label,

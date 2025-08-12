@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/Button";
 import {
   buildTruthTable,
   checkValidity,
-  parse,
   parseArgument,
   prettyPrintValuation,
   AstNode,
   collectVariables,
   evaluate,
+  deriveArgumentSteps,
+  formatAst,
+  buildDetailedTruthTable,
 } from "@/lib/logic/propositional";
 
 type Row = ReturnType<typeof buildTruthTable>["rows"][number];
@@ -31,6 +33,8 @@ export default function PropositionalChecker() {
     | null
   >(null);
   const [userTruths, setUserTruths] = React.useState<Record<string, boolean>>({});
+  const [showDetailed, setShowDetailed] = React.useState(false);
+  const [selectedRow, setSelectedRow] = React.useState<number | null>(null);
 
   function onRun() {
     try {
@@ -62,10 +66,67 @@ export default function PropositionalChecker() {
         cAst,
         variables,
       });
-    } catch (e: any) {
-      setError(e.message || String(e));
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : String(err));
       setResult(null);
     }
+  }
+
+  function exportCSV() {
+    if (!result?.table) return;
+    const headers = [...result.table.variables, ...result.pAsts.map((_, i) => `Premise ${i + 1}`), "Conclusion"];
+    const lines = [headers.join(",")];
+    for (const row of result.table.rows) {
+      const vals = [
+        ...result.table.variables.map((v) => (row.valuation[v] ? "T" : "F")),
+        ...row.premisesValues.map((b) => (b ? "T" : "F")),
+        row.conclusionValue ? "T" : "F",
+      ];
+      lines.push(vals.join(","));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "truth-table.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportLaTeX() {
+    if (!result?.table) return;
+    const headerCols = [
+      ...result.table.variables,
+      ...result.pAsts.map((_, i) => `P_${i + 1}`),
+      "C",
+    ];
+    const colSpec = "|" + headerCols.map(() => "c|").join("");
+    const headerRow = headerCols.join(" & ") + " \\\n";
+    const bodyRows = result.table.rows
+      .map((row) => {
+        const vals = [
+          ...result.table!.variables.map((v) => (row.valuation[v] ? "T" : "F")),
+          ...row.premisesValues.map((b) => (b ? "T" : "F")),
+          row.conclusionValue ? "T" : "F",
+        ];
+        return vals.join(" & ") + " \\\n";
+      })
+      .join("");
+    const latex = `\\begin{tabular}{${colSpec}}
+${headerRow}\\hline
+${bodyRows}\\hline
+\\end{tabular}`;
+    const blob = new Blob([latex], { type: "text/plain;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "truth-table.tex";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPDF() {
+    window.print();
   }
 
   function updatePremise(i: number, value: string) {
@@ -146,6 +207,14 @@ export default function PropositionalChecker() {
 
       <div className="flex gap-3">
         <Button onClick={onRun}>Check validity</Button>
+        <Button variant="secondary" onClick={() => setShowDetailed((s) => !s)}>
+          {showDetailed ? "Hide" : "Show"} detailed table
+        </Button>
+        <div className="ml-auto flex gap-2 no-print">
+          <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
+          <Button variant="outline" onClick={exportLaTeX}>Export LaTeX</Button>
+          <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
+        </div>
       </div>
 
       {error && (
@@ -207,7 +276,7 @@ export default function PropositionalChecker() {
                     return (
                       <div className="space-y-1">
                         <div>
-                          Premises under your assignment: {premVals.map((b, i) => (b ? "T" : "F")).join(", ")}
+                          Premises under your assignment: {premVals.map((b) => (b ? "T" : "F")).join(", ")}
                         </div>
                         <div>Conclusion under your assignment: {concVal ? "T" : "F"}</div>
                         <div className={sound ? "text-emerald-700 dark:text-emerald-300" : "text-amber-700 dark:text-amber-300"}>
@@ -245,7 +314,7 @@ export default function PropositionalChecker() {
                   {result.table.rows.map((row, idx) => {
                     const premisesTrue = row.premisesValues.every(Boolean);
                     return (
-                      <tr key={idx} className="border-t border-zinc-200 dark:border-zinc-800">
+                      <tr key={idx} className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/30 cursor-pointer" onClick={() => setSelectedRow(idx)}>
                         {result.table!.variables.map((v) => (
                           <td key={v} className="px-3 py-2">
                             {row.valuation[v] ? "T" : "F"}
@@ -271,8 +340,96 @@ export default function PropositionalChecker() {
               </table>
             </div>
           )}
+
+          {showDetailed && result?.pAsts && (
+            <div className="overflow-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
+              {(() => {
+                const dt = buildDetailedTruthTable(result.pAsts, result.cAst);
+                return (
+                  <table className="min-w-[960px] w-full text-xs">
+                    <thead className="bg-zinc-50 dark:bg-zinc-900/40">
+                      <tr>
+                        {dt.columns.map((c) => (
+                          <th key={c} className="px-2 py-2 text-left font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+                            {c}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dt.rows.map((row, idx) => (
+                        <tr key={idx} className="border-t border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50/60 dark:hover:bg-zinc-900/30 cursor-pointer" onClick={() => setSelectedRow(idx)}>
+                          {dt.columns.map((c) => (
+                            <td key={c} className="px-2 py-2">
+                              {row.valuesByColumn[c] ? "T" : "F"}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                );
+              })()}
+            </div>
+          )}
+
+          {showDetailed && result?.table && selectedRow !== null && (
+            <DetailedDerivation
+              rowIndex={selectedRow}
+              valuation={result.table.rows[selectedRow].valuation}
+              pAsts={result.pAsts}
+              cAst={result.cAst}
+            />
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function DetailedDerivation({
+  rowIndex,
+  valuation,
+  pAsts,
+  cAst,
+}: {
+  rowIndex: number;
+  valuation: Record<string, boolean>;
+  pAsts: AstNode[];
+  cAst: AstNode;
+}) {
+  const { premiseSteps, conclusionSteps } = deriveArgumentSteps(pAsts, cAst, valuation);
+  return (
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
+      <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Derivation for row {rowIndex + 1}</div>
+      <div className="mt-3 grid md:grid-cols-2 gap-4">
+        <div>
+          <div className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Premises</div>
+          {premiseSteps.map((steps, i) => (
+            <ol key={i} className="mt-1 list-decimal list-inside text-sm">
+              <div className="text-xs text-zinc-500">Premise {i + 1}: {formatAst(pAsts[i])}</div>
+              {steps.map((s, j) => (
+                <li key={j} className="mt-1">
+                  <span className="font-mono">{s.label}</span> = {s.value ? "T" : "F"} <span className="opacity-70">[{s.rule}]</span>
+                  {s.details ? <div className="text-xs opacity-70">{s.details}</div> : null}
+                </li>
+              ))}
+            </ol>
+          ))}
+        </div>
+        <div>
+          <div className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">Conclusion</div>
+          <ol className="mt-1 list-decimal list-inside text-sm">
+            <div className="text-xs text-zinc-500">{formatAst(cAst)}</div>
+            {conclusionSteps.map((s, j) => (
+              <li key={j} className="mt-1">
+                <span className="font-mono">{s.label}</span> = {s.value ? "T" : "F"} <span className="opacity-70">[{s.rule}]</span>
+                {s.details ? <div className="text-xs opacity-70">{s.details}</div> : null}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
     </div>
   );
 }

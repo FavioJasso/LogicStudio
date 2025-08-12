@@ -345,6 +345,206 @@ export function buildTruthTable(
   return { variables, rows };
 }
 
+// --- Derivation and detailed tables ---
+
+function stringify(ast: AstNode): string {
+  switch (ast.type) {
+    case "Var":
+      return ast.name;
+    case "Not":
+      return `(¬${stringify(ast.expr)})`;
+    case "And":
+      return `(${stringify(ast.left)} ∧ ${stringify(ast.right)})`;
+    case "Or":
+      return `(${stringify(ast.left)} ∨ ${stringify(ast.right)})`;
+    case "Implies":
+      return `(${stringify(ast.left)} → ${stringify(ast.right)})`;
+    case "Iff":
+      return `(${stringify(ast.left)} ↔ ${stringify(ast.right)})`;
+  }
+}
+
+function depthOf(node: AstNode): number {
+  switch (node.type) {
+    case "Var":
+      return 0;
+    case "Not":
+      return 1 + depthOf(node.expr);
+    case "And":
+    case "Or":
+    case "Implies":
+    case "Iff":
+      return 1 + Math.max(depthOf(node.left), depthOf(node.right));
+  }
+}
+
+export function formatAst(ast: AstNode): string {
+  return stringify(ast);
+}
+
+export type Subformula = { label: string; ast: AstNode; depth: number };
+
+export function listSubformulas(ast: AstNode): Subformula[] {
+  const map = new Map<string, Subformula>();
+  function visit(node: AstNode): void {
+    const label = stringify(node);
+    if (!map.has(label)) {
+      map.set(label, { label, ast: node, depth: depthOf(node) });
+    }
+    switch (node.type) {
+      case "Var":
+        return;
+      case "Not":
+        visit(node.expr);
+        return;
+      case "And":
+      case "Or":
+      case "Implies":
+      case "Iff":
+        visit(node.left);
+        visit(node.right);
+        return;
+    }
+  }
+  visit(ast);
+  return Array.from(map.values()).sort((a, b) => a.depth - b.depth);
+}
+
+export function listSubformulasForAll(forms: AstNode[]): Subformula[] {
+  const map = new Map<string, Subformula>();
+  for (const f of forms) {
+    for (const s of listSubformulas(f)) {
+      if (!map.has(s.label)) map.set(s.label, s);
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => a.depth - b.depth || a.label.localeCompare(b.label));
+}
+
+export type DetailedTruthTableRow = {
+  valuation: Valuation;
+  valuesByColumn: Record<string, boolean>;
+};
+
+export function buildDetailedTruthTable(
+  premises: AstNode[],
+  conclusion: AstNode
+): {
+  variables: string[];
+  columns: string[]; // subformula labels
+  rows: DetailedTruthTableRow[];
+} {
+  const allVarsSet = new Set<string>();
+  for (const p of premises) collectVariables(p).forEach((v) => allVarsSet.add(v));
+  collectVariables(conclusion).forEach((v) => allVarsSet.add(v));
+  const variables = Array.from(allVarsSet);
+
+  const allForms: AstNode[] = [...premises, conclusion];
+  const subs = listSubformulasForAll(allForms);
+  const columns = subs.map((s) => s.label);
+
+  const rows: DetailedTruthTableRow[] = [];
+  for (const v of enumerateValuations(variables)) {
+    const valuesByColumn: Record<string, boolean> = {};
+    for (const s of subs) {
+      valuesByColumn[s.label] = evaluate(s.ast, v);
+    }
+    rows.push({ valuation: { ...v }, valuesByColumn });
+  }
+  return { variables, columns, rows };
+}
+
+export type DerivationStep = {
+  label: string; // subformula as string
+  value: boolean;
+  rule: string;
+  details?: string;
+};
+
+function deriveEval(node: AstNode, v: Valuation, steps: DerivationStep[]): boolean {
+  switch (node.type) {
+    case "Var": {
+      const val = Boolean(v[node.name]);
+      steps.push({ label: stringify(node), value: val, rule: "VAR" });
+      return val;
+    }
+    case "Not": {
+      const inner = deriveEval(node.expr, v, steps);
+      const res = !inner;
+      steps.push({
+        label: stringify(node),
+        value: res,
+        rule: "NOT",
+        details: `¬${stringify(node.expr)} because ${inner ? "T" : "F"} → ${res ? "T" : "F"}`,
+      });
+      return res;
+    }
+    case "And": {
+      const l = deriveEval(node.left, v, steps);
+      const r = deriveEval(node.right, v, steps);
+      const res = l && r;
+      steps.push({
+        label: stringify(node),
+        value: res,
+        rule: "AND",
+        details: `${stringify(node.left)} ∧ ${stringify(node.right)}: ${l ? "T" : "F"} ∧ ${r ? "T" : "F"} → ${res ? "T" : "F"}`,
+      });
+      return res;
+    }
+    case "Or": {
+      const l = deriveEval(node.left, v, steps);
+      const r = deriveEval(node.right, v, steps);
+      const res = l || r;
+      steps.push({
+        label: stringify(node),
+        value: res,
+        rule: "OR",
+        details: `${stringify(node.left)} ∨ ${stringify(node.right)}: ${l ? "T" : "F"} ∨ ${r ? "T" : "F"} → ${res ? "T" : "F"}`,
+      });
+      return res;
+    }
+    case "Implies": {
+      const l = deriveEval(node.left, v, steps);
+      const r = deriveEval(node.right, v, steps);
+      const res = !l || r;
+      steps.push({
+        label: stringify(node),
+        value: res,
+        rule: "IMPLIES",
+        details: `${stringify(node.left)} → ${stringify(node.right)} is (¬${stringify(node.left)}) ∨ ${stringify(node.right)}: ${(!l) ? "T" : "F"} ∨ ${r ? "T" : "F"} → ${res ? "T" : "F"}`,
+      });
+      return res;
+    }
+    case "Iff": {
+      const l = deriveEval(node.left, v, steps);
+      const r = deriveEval(node.right, v, steps);
+      const res = l === r;
+      steps.push({
+        label: stringify(node),
+        value: res,
+        rule: "IFF",
+        details: `${stringify(node.left)} ↔ ${stringify(node.right)}: ${l ? "T" : "F"} ↔ ${r ? "T" : "F"} → ${res ? "T" : "F"}`,
+      });
+      return res;
+    }
+  }
+}
+
+export function deriveSteps(ast: AstNode, v: Valuation): DerivationStep[] {
+  const steps: DerivationStep[] = [];
+  deriveEval(ast, v, steps);
+  return steps;
+}
+
+export function deriveArgumentSteps(
+  premises: AstNode[],
+  conclusion: AstNode,
+  v: Valuation
+): { premiseSteps: DerivationStep[][]; conclusionSteps: DerivationStep[] } {
+  const premiseSteps = premises.map((p) => deriveSteps(p, v));
+  const conclusionSteps = deriveSteps(conclusion, v);
+  return { premiseSteps, conclusionSteps };
+}
+
 export type ParseResult = {
   premises: AstNode[];
   conclusion: AstNode;

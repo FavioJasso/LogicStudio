@@ -24,3 +24,53 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Scale base font size for accessibility */
+html.large-text-root {
+  font-size: 20px; /* scales rem-based typography across the app */
+}
+
+/* Projector and high-visibility modes */
+.projector-mode {
+  background: #ffffff !important;
+  color: #000000 !important;
+  font-size: 18px;
+  line-height: 1.6;
+}
+.projector-mode .card {
+  background: #ffffff !important;
+  border-color: #000000 !important;
+}
+.large-text {
+  font-size: 20px;
+}
+.high-contrast {
+  --background: #ffffff;
+  --foreground: #000000;
+}
+
+/* Print styles: focus on content area, hide controls */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-area, .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0.5in;
+  }
+}

@@ -171,7 +171,7 @@ export function checkSyllogism(s: Syllogism): SyllogismResult {
     // Not a proper categorical syllogism structure
     return { isValid: false, moodFigure: mf, namedForm: null, counterModel: null };
   }
-  const { S, P, M } = mf.terms;
+  const { S, P } = mf.terms;
 
   const mapTerm = (t: string, assignment: { S: Set<string>; P: Set<string>; M: Set<string> }): Set<string> => {
     const key = normalizeTerm(t);
