@@ -89,8 +89,10 @@ export default function PropositionalChecker() {
     const a = document.createElement("a");
     a.href = url;
     a.download = "truth-table.csv";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   function exportLaTeX() {
@@ -116,13 +118,15 @@ export default function PropositionalChecker() {
 ${headerRow}\\hline
 ${bodyRows}\\hline
 \\end{tabular}`;
-    const blob = new Blob([latex], { type: "text/plain;charset=utf-8;" });
+    const blob = new Blob([latex], { type: "application/x-tex;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "truth-table.tex";
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   function exportPDF() {
@@ -140,11 +144,127 @@ ${bodyRows}\\hline
     setPremises((prev) => prev.filter((_, idx) => idx !== i));
   }
 
-  const examples: Array<{ label: string; premises: string[]; conclusion: string }> = [
-    { label: "Modus Ponens", premises: ["P → Q", "P"], conclusion: "Q" },
-    { label: "Affirming the consequent (invalid)", premises: ["P → Q", "Q"], conclusion: "P" },
-    { label: "Tautological consequence", premises: ["P", "Q → P"], conclusion: "P" },
+  const examples: Array<{
+    label: string;
+    premises: string[];
+    conclusion: string;
+    explanation: string; // 3-5 sentence rationale
+  }> = [
+    {
+      label: "Modus Ponens (valid)",
+      premises: ["P → Q", "P"],
+      conclusion: "Q",
+      explanation:
+        "Modus Ponens states that if P implies Q and P is true, then Q must be true. There is no valuation where both the conditional and the antecedent are true while the consequent is false. The rule mirrors everyday reasoning: from a sufficient condition and its fulfillment, the result follows. Our truth-table confirms no counterexample exists. Therefore the argument is valid.",
+    },
+    {
+      label: "Modus Tollens (valid)",
+      premises: ["P → Q", "¬Q"],
+      conclusion: "¬P",
+      explanation:
+        "Modus Tollens says that if P implies Q and Q is false, then P must be false. If P were true while Q is false, the conditional would be violated, so that valuation cannot exist. This captures reasoning from a necessary condition and its failure. The table shows no row with true premises and a false conclusion. Hence, the argument is valid.",
+    },
+    {
+      label: "Hypothetical Syllogism (valid)",
+      premises: ["P → Q", "Q → R"],
+      conclusion: "P → R",
+      explanation:
+        "Hypothetical Syllogism chains conditionals: from P → Q and Q → R we infer P → R. Any valuation making both premises true will make the composite implication true as well. The middle term Q passes the requirement forward. Truth-table analysis shows no countermodel. So the argument is valid.",
+    },
+    {
+      label: "Disjunctive Syllogism (valid)",
+      premises: ["P ∨ Q", "¬P"],
+      conclusion: "Q",
+      explanation:
+        "Disjunctive Syllogism eliminates one disjunct: if P ∨ Q and not P, then Q follows. If the disjunction is true and P is false, the only way the disjunction can be true is with Q true. The truth-table rules out any row with true premises and false Q. This matches ordinary 'either-or' reasoning. Therefore the argument is valid.",
+    },
+    {
+      label: "Addition (valid)",
+      premises: ["P"],
+      conclusion: "P ∨ Q",
+      explanation:
+        "Addition allows us to move from a statement to a larger disjunction. If P is true, then the disjunction P ∨ Q is true regardless of Q. There cannot be a counterexample with P true and P ∨ Q false. Though it may feel uninformative, it's truth-functionally correct. Thus the argument is valid.",
+    },
+    {
+      label: "Simplification (valid)",
+      premises: ["P ∧ Q"],
+      conclusion: "P",
+      explanation:
+        "From a conjunction we can infer each conjunct. If P ∧ Q is true, then P is true and Q is true by definition of ∧. The table confirms no row where the conjunction is true and P is false. This is a standard elimination rule. Hence, valid.",
+    },
+    {
+      label: "Conjunction (valid)",
+      premises: ["P", "Q"],
+      conclusion: "P ∧ Q",
+      explanation:
+        "Conjunction introduces ∧ from two independently true statements. If P is true and Q is true, then P ∧ Q is true by the semantics of ∧. No counterexample can make both premises true while the conjunction is false. This is the dual to simplification. Therefore valid.",
+    },
+    {
+      label: "Constructive Dilemma (valid)",
+      premises: ["P → R", "Q → S", "P ∨ Q"],
+      conclusion: "R ∨ S",
+      explanation:
+        "Constructive Dilemma argues by cases on a disjunction. If P leads to R and Q leads to S, and at least one of P or Q holds, then at least one of R or S must hold. The truth-table spans the two cases and preserves truth to the consequent disjunction. There is no valuation with true premises and a false conclusion. So the argument is valid.",
+    },
+    {
+      label: "Destructive Dilemma (valid)",
+      premises: ["P → R", "Q → S", "¬R ∨ ¬S"],
+      conclusion: "¬P ∨ ¬Q",
+      explanation:
+        "Destructive Dilemma contraposits each conditional within a disjunctive refutation. If either R is false or S is false, then the corresponding antecedent must fail, yielding ¬P ∨ ¬Q. The table shows every row with the premises true forces at least one antecedent false. This mirrors reasoning by contrapositive on alternatives. Hence valid.",
+    },
+    {
+      label: "Biconditional Elimination (valid)",
+      premises: ["P ↔ Q", "P"],
+      conclusion: "Q",
+      explanation:
+        "A biconditional means each side implies the other. From P ↔ Q and P, it follows that Q, because the right-to-left direction is guaranteed in the definition of ↔. Any valuation making P ↔ Q and P true must make Q true. The reverse direction (from Q) would also work symmetrically. Therefore valid.",
+    },
+    {
+      label: "Biconditional Introduction (valid)",
+      premises: ["P → Q", "Q → P"],
+      conclusion: "P ↔ Q",
+      explanation:
+        "If each statement implies the other, the biconditional holds. The truth-table treats ↔ as equivalence of truth values, which follows from the two conditionals. No counterexample makes both implications true while the equivalence fails. This corresponds to mutual sufficiency and necessity. Thus valid.",
+    },
+    {
+      label: "Double Negation (valid)",
+      premises: ["P"],
+      conclusion: "¬¬P",
+      explanation:
+        "Under classical logic, negation is involutive: applying it twice preserves truth. If P is true, then ¬P is false and so ¬¬P is true. There is no way for P to be true while ¬¬P is false. The rule can be read in both directions, but here we introduce ¬¬. Therefore valid.",
+    },
+    {
+      label: "Affirming the Consequent (invalid)",
+      premises: ["P → Q", "Q"],
+      conclusion: "P",
+      explanation:
+        "This fallacy assumes that because Q is true, the specific cause P must be true. But Q might hold for other reasons. The truth-table shows a counterexample when P is false and Q is true: the conditional is still true, yet the conclusion fails. So the premises can be true while the conclusion is false. The argument is invalid.",
+    },
+    {
+      label: "Denying the Antecedent (invalid)",
+      premises: ["P → Q", "¬P"],
+      conclusion: "¬Q",
+      explanation:
+        "From the falsity of P it does not follow that Q is false. Q may be true for independent reasons. In the table, take P false and Q true: the conditional holds, the second premise holds, yet the conclusion is false. This exhibits a concrete countermodel. Hence the argument is invalid.",
+    },
+    {
+      label: "Proof by Cases (valid)",
+      premises: ["P ∨ Q", "P → R", "Q → R"],
+      conclusion: "R",
+      explanation:
+        "Proof by cases evaluates each disjunct and carries truth to a common result. If either P or Q holds, and each leads to R, then R must hold. The semantics of ∨ and → ensure preservation of truth across both branches. The table contains no row with all premises true and R false. Therefore valid.",
+    },
+    {
+      label: "De Morgan Instance (valid)",
+      premises: ["¬(P ∨ Q)"],
+      conclusion: "¬P ∧ ¬Q",
+      explanation:
+        "De Morgan’s law says that denying a disjunction is equivalent to conjoining the denials. If neither P nor Q is allowed, then both ¬P and ¬Q are true. The truth-table shows exact matching truth values for these forms. This is a semantic equivalence used constantly in derivations. Thus valid.",
+    },
   ];
+
+  const [selectedExampleIdx, setSelectedExampleIdx] = React.useState<number | null>(0);
 
   return (
     <div className="space-y-6">
@@ -154,17 +274,16 @@ ${bodyRows}\\hline
           <select
             className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             onChange={(e) => {
-              const ex = examples[Number(e.target.value)];
+              const idx = Number(e.target.value);
+              const ex = examples[idx];
               if (!ex) return;
               setPremises(ex.premises);
               setConclusion(ex.conclusion);
+              setSelectedExampleIdx(idx);
             }}
           >
-            <option value="" hidden>
-              Choose example
-            </option>
             {examples.map((ex, i) => (
-              <option key={i} value={i}>
+              <option key={i} value={i} selected={i === selectedExampleIdx ?? 0}>
                 {ex.label}
               </option>
             ))}
@@ -211,17 +330,7 @@ ${bodyRows}\\hline
         />
       </div>
 
-      <div className="flex gap-3">
-        <Button onClick={onRun}>Check validity</Button>
-        <Button variant="secondary" onClick={() => setShowDetailed((s) => !s)}>
-          {showDetailed ? "Hide" : "Show"} detailed table
-        </Button>
-        <div className="ml-auto flex gap-2 no-print">
-          <Button variant="outline" onClick={exportCSV}>Export CSV</Button>
-          <Button variant="outline" onClick={exportLaTeX}>Export LaTeX</Button>
-          <Button variant="outline" onClick={exportPDF}>Export PDF</Button>
-        </div>
-      </div>
+      <div className="flex gap-3 no-print" />
 
       {error && (
         <div className="text-sm text-red-600 dark:text-red-400 rounded-md bg-red-50 dark:bg-red-950/30 p-3">
@@ -231,6 +340,13 @@ ${bodyRows}\\hline
 
       {result && (
         <div className="space-y-4">
+          {selectedExampleIdx !== null && examples[selectedExampleIdx] && (
+            <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 bg-zinc-50/60 dark:bg-zinc-900/30">
+              <div className="text-sm text-zinc-800 dark:text-zinc-200 whitespace-pre-line">
+                {examples[selectedExampleIdx].explanation}
+              </div>
+            </div>
+          )}
           <div
             className={`rounded-lg p-4 border ${
               result.isValid
@@ -453,7 +569,10 @@ function ExportMenu({ onCSV, onLaTeX, onPDF }: { onCSV: () => void; onLaTeX: () 
   }, []);
   return (
     <div className="inline-block" data-export-menu>
-      <Button variant="outline" onClick={() => setOpen((v) => !v)}>Export</Button>
+      <Button variant="outline" onClick={() => setOpen((v) => !v)}>
+        <span className="mr-1">Export</span>
+        <span aria-hidden>▾</span>
+      </Button>
       {open && (
         <div className="absolute mt-2 w-40 rounded-lg border border-zinc-200 bg-white p-1 text-sm shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
           <button className="w-full text-left px-3 py-2 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={onCSV}>CSV</button>

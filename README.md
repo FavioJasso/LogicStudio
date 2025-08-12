@@ -7,6 +7,9 @@ Empower instructors and students to focus on reasoning, not rote mechanics. Logi
 
 ### Current Features
 - Propositional logic helpers: input well-formed formulas and visualize evaluations
+- Auto-generated truth tables with subformula columns; click a row to see step-by-step derivations
+- Export dropdown (CSV / LaTeX / PDF) for handouts and archives
+- Projector mode and Large-text accessibility toggle; print-friendly styles
 - Syllogism checker: validate categorical syllogisms and common forms
 - Simple, clean UI components with keyboard support
 
@@ -40,11 +43,10 @@ Start editing the app by modifying `src/app/page.tsx`. The page auto-updates as 
 
 ## Roadmap for Academic Use
 
-### For Professors
-- Auto-generated truth tables and step-by-step derivations for classroom display
-- Print- and projector-friendly themes; large-font/contrast modes
+- [Shipped] Auto-generated truth tables and step-by-step derivations for classroom display
+- [Shipped] Projector-friendly theme and large-text mode; print styles
 - Assignment mode with rubrics, partial credit, and auto-grading for mechanical steps
-- Export to PDF/LaTeX/CSV for handouts, archives, and LMS uploads
+- [Shipped] Export to PDF/LaTeX/CSV for handouts, archives, and LMS uploads
 - Item banks with randomization and multiple versions to reduce sharing/cheating
 - Class analytics: common errors, time-on-task, and learning outcomes alignment
 
@@ -62,7 +64,7 @@ Start editing the app by modifying `src/app/page.tsx`. The page auto-updates as 
 
 ### Accessibility and Inclusivity
 - Full keyboard navigation, screen-reader semantics, and ARIA labels
-- High-contrast mode, dyslexia-friendly fonts, and color-independent cues
+- Dyslexia-friendly fonts and color-independent cues
 - Localized UI copy; right-to-left language support
 - Offline-first PWA so classrooms without stable internet can still run activities
 
