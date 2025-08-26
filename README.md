@@ -11,7 +11,7 @@ Empower instructors and students to focus on reasoning, not rote mechanics. Logi
 - Export dropdown (CSV / LaTeX / PDF) for handouts and archives
 - Projector mode and Large-text accessibility toggle; print-friendly styles
 - Syllogism checker: validate categorical syllogisms and common forms
-- Simple, clean UI components with keyboard support
+- Keyboard support with keyboard shortcuts. 
 
 ---
 
